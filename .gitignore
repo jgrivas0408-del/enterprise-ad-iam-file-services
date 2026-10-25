@@ -1,0 +1,31 @@
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.pfx
+*.p12
+*credentials*
+*secrets*
+
+# Virtual machines, media, and backups
+*.vmdk
+*.vmem
+*.vmsn
+*.vmss
+*.vmx
+*.nvram
+*.vhd
+*.vhdx
+*.iso
+*.ova
+*.ovf
+*.bak
+
+# Local OS and editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+__pycache__/

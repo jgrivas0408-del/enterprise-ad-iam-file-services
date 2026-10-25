@@ -1,41 +1,41 @@
 # Recovered lab commands and troubleshooting notes
 
-These excerpts were recovered from the original September 2026 lab conversations. They are instructional commands from the lab walkthrough, not a recovered standalone script or a fresh execution transcript. Expected outputs below are not evidence that a command was run successfully.
+These excerpts were recovered from the original September 2026 walkthrough. They are instructions, not a recovered standalone script or a fresh execution transcript. Expected outputs are not execution evidence. See the [README screenshot gallery](../README.md#selected-original-evidence) for eight original screenshots uploaded separately.
 
 ## Inspect the departmental SMB share
 
-Run on FILE01:
+On FILE01:
 
 ```powershell
 Get-SmbShare -Name 'Departments$' |
 Select-Object Name,Path,FolderEnumerationMode
 ```
 
-The intended final configuration is `FolderEnumerationMode : AccessBased`. Verify the actual output before drawing conclusions.
+The intended final FolderEnumerationMode is AccessBased. Verify actual output.
 
 ## Create a harmless access-test file
 
-The walkthrough instructed creating this file on FILE01 from an elevated Command Prompt:
+From an elevated Command Prompt on FILE01:
 
 ```cmd
 echo Security department test file > "D:\Shares\Security\Security_Audit_Test.txt"
 ```
 
-This writes a test file and overwrites a file of the same name. Use only the isolated lab and ensure the path contains disposable test data.
+This writes or overwrites a file. Use only disposable test data in the isolated lab.
 
 ## Test a departmental access boundary
 
-On CLIENT01, while signed in as the lab test user `JGR\dbrooks`:
+On CLIENT01 as the lab test user JGR\dbrooks:
 
 ```cmd
 type "\\FILE01\Departments$\Security\Security_Audit_Test.txt"
 ```
 
-The intended result is denied access for an unauthorized user. The lab encountered a path-not-found response while access-based enumeration was enabled. That response alone does not prove that a particular NTFS ACL or audit configuration is correct.
+The intended result is denied access. The walkthrough encountered path-not-found while access-based enumeration was enabled. That response alone does not establish a particular ACL or audit configuration.
 
 ## Inspect matching SMB access-check events
 
-The walkthrough supplied this PowerShell query for FILE01:
+On FILE01 with appropriate Security-log privileges:
 
 ```powershell
 Get-WinEvent -FilterHashtable @{LogName='Security';Id=5145} -MaxEvents 50 |
@@ -43,15 +43,12 @@ Where-Object {$_.Message -match 'dbrooks' -and $_.Message -match 'Security_Audit
 Select-Object -First 1 -ExpandProperty Message
 ```
 
-The query searches the most recent 50 matching event IDs. No output does not prove that no event exists: it may be outside that window or may not match the text filter. Reading the Security log requires appropriate privileges. Event availability depends on the audit policy.
+The query only searches the most recent 50 matching event IDs. Empty output does not establish that no event exists. Audit policy and the text filter affect results.
 
-## Troubleshooting recorded in the walkthrough
+## Troubleshooting context
 
-- Cached SMB connections were considered while testing enumeration behavior.
-- The walkthrough distinguished a share-root access check from a file-level check containing `Security\Security_Audit_Test.txt`.
-- Temporary changes to enumeration were discussed for a controlled audit test; the intended final setting remained access-based enumeration.
-- The closing instructions called for VMware snapshots of DC01, CLIENT01 and FILE01 named `Enterprise-Lab-Completed`. These instructions do not independently prove snapshot creation.
+The walkthrough considered cached SMB sessions, distinguished share-root and file-level access checks, and discussed temporary enumeration changes for a controlled audit test. The intended final setting remained access-based enumeration. Closing instructions called for VMware snapshots named Enterprise-Lab-Completed; those instructions do not prove snapshot creation.
 
 ## Evidence status
 
-The shared conversations expose the command text, but their original screenshot attachments display as image placeholders in the retrieved public view. Original images have not been imported into this repository. These notes do not substitute for screenshot evidence, effective policy exports, or actual command output.
+Eight original user-supplied screenshots are now included in the README gallery. They cover password resets, lockout, policy checks, server administrator membership, departmental folders and a denied access attempt. Original screenshots of FSRM enforcement, detailed audit events, share encryption, ACLs and quota settings are not included in the selected gallery. No standalone original script or configuration export has been recovered.

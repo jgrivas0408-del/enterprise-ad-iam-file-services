@@ -1,15 +1,10 @@
 # Enterprise Active Directory, IAM & File Services Lab
 
-**Author:** Joshua Gonzalez Rivas  
-**Environment:** VMware • Windows Server 2022 • Windows 11
+**Joshua Gonzalez Rivas** · VMware · Windows Server 2022 · Windows 11
 
 ## Overview
 
 I built a three-VM Windows domain to practice identity administration, delegated access, Group Policy, and secure departmental file services. This home lab developed skills relevant to IT support, systems administration, and IAM.
-
-This repository documents a completed home lab. It currently contains documentation; original screenshots, scripts, and configuration exports have not been added. The implementation summary comes from my completed project record, rather than a fresh inspection of the VMs.
-
-## Environment
 
 | System | Role |
 | --- | --- |
@@ -19,48 +14,80 @@ This repository documents a completed home lab. It currently contains documentat
 
 ## Implementation
 
-### Active Directory and IAM
+- AD DS, DNS, domain joins, tiered OUs, users, security groups, service and administrative accounts.
+- RBAC, least privilege, and AGDLP: Accounts → Global groups → Domain Local groups → Permissions.
+- Separate Tier 0 and Tier 1 administration and delegated Help Desk password reset/account unlock tasks.
+- Account policies, workstation security GPOs, and server-local administrative access through Group Policy.
+- Departmental SMB services on a dedicated NTFS volume, a hidden encrypted share, access-based enumeration, and group-based ACLs.
+- FSRM 3 GB quotas, active executable-file screening, and event-log investigation.
 
-- Deployed AD DS and DNS and joined systems to the domain.
-- Created tiered OUs, users, security groups, service and administrative accounts.
-- Applied RBAC, least privilege, and AGDLP: Accounts → Global groups → Domain Local groups → Permissions.
-- Separated Tier 0 and Tier 1 administrative responsibilities.
-- Delegated Help Desk password reset and account unlock tasks.
-- Practiced account recovery and domain sign-in verification.
+The implementation summary comes from the completed lab record. The original screenshots below substantiate specific identity, policy and file-access checks; they do not independently prove every configuration listed above. Hidden shares still require authorization. SMB encryption protects transport and does not establish encryption at rest.
 
-### Group Policy
+## Selected original evidence
 
-- Created and linked GPOs for account policies and workstation security settings.
-- Configured server-local administrative access through Group Policy.
-- Tested policy application through domain user sign-in and workstation checks.
+Eight original screenshots were selected for clear results and useful context. Lab account names and the jgr.local domain are test-environment identifiers. Images retain their original contents.
 
-### File services
+### 1. Password reset succeeds
 
-- Configured departmental SMB services on a dedicated NTFS volume.
-- Configured a hidden, encrypted SMB share with access-based enumeration.
-- Applied group-based share and NTFS ACLs.
-- Configured FSRM 3 GB quotas and active executable-file screening.
-- Practiced file access checks and event-log validation.
+AD Users and Computers reports that the password for the test account Marcus Reed was changed. The OU hierarchy is visible. This message confirms a reset, but does not independently establish the acting account or complete delegation scope.
 
-Hidden shares still require authorization; hiding a share is not an access control. SMB encryption protects data in transit, and does not establish encryption at rest.
+![Successful test-account password reset](01-password-reset-success.png)
 
-## Validation
+### 2. Password reset is denied
 
-During the lab I checked domain sign-in, password resets and account unlocks, Group Policy application, and SMB/NTFS access after permission adjustments. Raw outputs and screenshots are not yet included.
+The same administrative console displays an access-denied response to a password-reset attempt. This provides evidence of an access boundary in the tested context, without establishing the full permission matrix.
 
-See the [validation and evidence checklist](docs/validation-and-evidence.md) for checks to capture when revisiting the lab. Expected results in that checklist are acceptance criteria, not newly executed test results.
+![Password-reset access denied](02-password-reset-denied.png)
+
+### 3. Domain account policy is verified
+
+After gpupdate /force, net accounts /domain shows a 14-character minimum password length, password history of 24, lockout threshold of five attempts, and 15-minute lockout duration/observation window. Earlier output above it records the prior values.
+
+![Domain account-policy values after policy refresh](03-domain-password-policy.png)
+
+### 4. Account lockout is observed
+
+CLIENT01 reports that the referenced account is locked out. A Get-ADUser diagnostic command is entered on DC01; this screenshot does not show its returned results.
+
+![Client account-lockout message](04-account-lockout.png)
+
+### 5. Workstation policy checks
+
+The output lists the workstation baseline and domain account-policy GPOs. Registry queries show InactivityTimeoutSecs = 0x384 (900 seconds), DisableRealtimeMonitoring = 0, and removable-storage Deny_All = 1. These are configuration checks, not a complete behavioral test of all protections.
+
+![Applied policy names and registry checks](05-workstation-policy-checks.png)
+
+### 6. Server administrator group membership
+
+FILE01 shows the local Administrators membership before and after a policy refresh. The later listing includes JGR\GG_Server_Admins, alongside the Group Policy preference editor.
+
+![Server local administrator group updated through policy](06-server-admin-group-policy.png)
+
+### 7. Departmental folders
+
+FILE01 displays the departmental folder structure under D:\Shares. This shows the folders exist, rather than proving their individual ACLs or SMB settings.
+
+![Departmental folders on FILE01](07-department-folders.png)
+
+### 8. Departmental access boundary
+
+A client shows a Finance folder/file context while an attempted Security path returns a Windows cannot access message. This documents the observed access result; the screenshot alone does not isolate whether SMB permissions, NTFS permissions, or enumeration behavior caused it.
+
+![Client departmental access boundary](08-department-access-denied.png)
+
+## Commands and further validation
+
+- [Recovered command excerpts and troubleshooting notes](docs/recovered-lab-commands.md)
+- [Validation and evidence checklist](docs/validation-and-evidence.md)
+
+The command excerpts are walkthrough instructions, not a standalone script or fresh execution transcript. The checklist describes further evidence to capture. Original configuration exports and standalone scripts have not been added.
 
 ## Skills
 
-Windows Server • Active Directory • DNS • IAM • RBAC • AGDLP • Group Policy • Delegation • SMB • NTFS permissions • FSRM • Troubleshooting • Documentation
+Windows Server · Active Directory · DNS · IAM · RBAC · AGDLP · Group Policy · Delegation · SMB · NTFS permissions · FSRM · Troubleshooting · Documentation
 
 ## Next improvements
 
-- Add sanitized screenshots and configuration exports from the original VMs.
-- Capture authorized and unauthorized departmental access results.
-- Record effective Group Policy and FSRM enforcement results.
-- Add automation after testing it in an isolated lab.
-
-## Contact
+Capture share encryption, access-based enumeration, ACLs, FSRM quota/enforcement, and audit-event details directly from the VMs. Add tested automation with its actual output.
 
 [GitHub](https://github.com/jgrivas0408-del) · [LinkedIn](https://www.linkedin.com/in/joshua-gonzalez-rivas-7857b6393)
